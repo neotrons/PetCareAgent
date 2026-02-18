@@ -14,6 +14,7 @@ Este documento detalla la arquitectura, herramientas y lógica del sistema tal c
 ## 2. Modelo de Datos
 - **Mascotas (`pets`)**: `id`, `name`, `breed`, `age`, `medical_info`.
 - **Eventos (`events`)**: `id`, `pet_id` (FK), `type`, `date`, `notes`.
+- **Configuración (`config`)**: `key`, `value` (Almacena la OpenAI API Key).
 - **Relación**: 1 Mascota -> N Eventos (Borrado en cascada habilitado).
 
 ## 3. Capacidades del Agente (Tools)
@@ -44,7 +45,14 @@ La fecha actual es {current_date}.
 - **Historial**: El frontend envía el array completo de `chat_history`. El backend lo procesa para que la IA mantenga la coherencia del diálogo.
 
 ## 6. Funcionalidades de Gestión (UI)
-- **Historial de Chat**: Persistente entre recargas de página.
-- **Botón Limpiar**: Vacía el historial local.
+- **Historial de Chat**: Persistente entre recargas de página con renderizado Markdown.
+- **Alertas Premium**: Notificaciones con SweetAlert2 para una mejor experiencia.
 - **Edición/Eliminación**: CRUD completo desde la pestaña de "Mis Mascotas".
+- **Ajustes**: Nueva sección para gestionar la API Key de OpenAI.
 - **Dashboard**: Vista de próximos eventos (rango de 7 días).
+
+## 7. Gestión Dinámica de API Key
+El sistema permite configurar la OpenAI API Key de forma flexible para despliegues de demo:
+- **Prioridad**: 1. Variable de Entorno (`.env`) > 2. Base de Datos (Tabla `config`).
+- **Setup Popup**: Si no se detecta ninguna llave al iniciar, el frontend muestra un diálogo obligatorio para que el usuario ingrese su propia clave.
+- **Seguridad**: Las llaves se muestran enmascaradas (`sk-...4a2b`) en el frontend y nunca se permiten copiar por completo desde la interfaz.
