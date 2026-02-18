@@ -97,15 +97,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function appendMessage(role, text, save = true) {
         const wrapper = document.createElement('div');
-        wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+        wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`;
 
         const msgDiv = document.createElement('div');
+        msgDiv.className = 'message-content ';
         if (role === 'user') {
-            msgDiv.className = 'bg-indigo-600 text-white rounded-2xl rounded-tr-none p-4 shadow-md max-w-[80%]';
+            msgDiv.className += 'bg-indigo-600 text-white rounded-2xl rounded-tr-none p-4 shadow-xl max-w-[85%]';
+            msgDiv.innerText = text;
         } else {
-            msgDiv.className = 'bg-white rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-100 max-w-[80%] text-gray-700';
+            msgDiv.className += 'bg-white rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-100 max-w-[85%] text-gray-700';
+            // Parse Markdown for assistant responses
+            msgDiv.innerHTML = marked.parse(text);
         }
-        msgDiv.innerText = text;
 
         wrapper.appendChild(msgDiv);
         chatMessages.appendChild(wrapper);
@@ -130,11 +133,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearChatBtn.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que deseas borrar todo el historial del chat?')) {
-            chatHistory = [];
-            localStorage.removeItem('petCareChatHistory');
-            location.reload();
-        }
+        Swal.fire({
+            title: '¿Limpiar historial?',
+            text: "Se borrarán todos los mensajes de esta conversación.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, borrar todo',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                chatHistory = [];
+                localStorage.removeItem('petCareChatHistory');
+                location.reload();
+            }
+        });
     });
 
     // Modal Handling
@@ -175,34 +189,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updatedPet = await response.json();
                 closeEditModal();
                 showPetDetail(updatedPet);
-                loadPets(); // Refresh the list in the background
+                loadPets();
+                Swal.fire({
+                    title: '¡Actualizado!',
+                    text: 'Los datos de la mascota se han guardado correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
             } else {
-                alert('Error al actualizar la mascota.');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo actualizar la mascota.',
+                    icon: 'error',
+                    confirmButtonColor: '#4f46e5'
+                });
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error de conexión.');
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'Hubo un problema al contactar con el servidor.',
+                icon: 'error',
+                confirmButtonColor: '#4f46e5'
+            });
         }
     });
 
     async function deletePet(petId) {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta mascota? Se borrarán también todos sus eventos y recordatorios.')) return;
+        Swal.fire({
+            title: '¿Eliminar mascota?',
+            text: "Esta acción no se puede deshacer. Se borrarán todos los eventos asociados.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/api/pets/${petId}`, {
+                        method: 'DELETE'
+                    });
 
-        try {
-            const response = await fetch(`/api/pets/${petId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                backBtn.click();
-                loadPets();
-            } else {
-                alert('Error al eliminar la mascota.');
+                    if (response.ok) {
+                        Swal.fire({
+                            title: 'Eliminada',
+                            text: 'La mascota ha sido eliminada correctamente.',
+                            icon: 'success',
+                            confirmButtonColor: '#4f46e5'
+                        });
+                        backBtn.click();
+                        loadPets();
+                    } else {
+                        Swal.fire('Error', 'No se pudo eliminar la mascota.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+                }
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error de conexión.');
-        }
+        });
     }
 
     // --- Pet Management Logic ---
