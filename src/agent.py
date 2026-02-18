@@ -4,11 +4,24 @@ from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
-from .database import Pet, Event
+from .database import Pet, Event, Config
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client(db: Session):
+    # 1. Check ENV
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    # 2. Check DB if not in ENV
+    if not api_key:
+        config = db.query(Config).filter(Config.key == "openai_api_key").first()
+        if config:
+            api_key = config.value
+            
+    if not api_key:
+        raise ValueError("OpenAI API Key not configured. Please set it in .env or application settings.")
+        
+    return OpenAI(api_key=api_key)
 
 def get_db_summary(db: Session):
     pets = db.query(Pet).all()
@@ -113,6 +126,8 @@ def chat_with_agent(db: Session, user_message: str, chat_history: list):
     messages = [{"role": "system", "content": SYSTEM_PROMPT.format(db_summary=db_summary, current_date=current_date)}]
     messages.extend(chat_history)
     messages.append({"role": "user", "content": user_message})
+
+    client = get_openai_client(db)
 
     response = client.chat.completions.create(
         model="gpt-4o", # O el modelo que prefieras

@@ -34,6 +34,12 @@ class Event(Base):
 
     pet = relationship("Pet", back_populates="events")
 
+class Config(Base):
+    __tablename__ = "config"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String)
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

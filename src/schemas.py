@@ -26,3 +26,11 @@ class PetUpdate(BaseModel):
     breed: Optional[str] = None
     age: Optional[int] = None
     medical_info: Optional[str] = None
+
+class SettingsResponse(BaseModel):
+    has_key: bool
+    source: str # 'env' or 'db'
+    masked_key: Optional[str] = None
+
+class KeyUpdate(BaseModel):
+    openai_api_key: str

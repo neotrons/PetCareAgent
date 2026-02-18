@@ -3,11 +3,47 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 
-from .database import get_db, Pet, Event
-from .schemas import ChatRequest, PetSchema, EventSchema, PetUpdate
+from .database import get_db, Pet, Event, Config
+from .schemas import ChatRequest, PetSchema, EventSchema, PetUpdate, SettingsResponse, KeyUpdate
 from . import agent
+import os
 
 router = APIRouter()
+
+@router.get("/api/settings", response_model=SettingsResponse)
+async def get_settings(db: Session = Depends(get_db)):
+    has_key = False
+    source = "none"
+    masked_key = None
+    
+    # Check ENV
+    env_key = os.getenv("OPENAI_API_KEY")
+    if env_key:
+        has_key = True
+        source = "env"
+        masked_key = f"{env_key[:7]}...{env_key[-4:]}" if len(env_key) > 11 else "***"
+    else:
+        # Check DB
+        config = db.query(Config).filter(Config.key == "openai_api_key").first()
+        if config:
+            has_key = True
+            source = "db"
+            db_key = config.value
+            masked_key = f"{db_key[:7]}...{db_key[-4:]}" if len(db_key) > 11 else "***"
+            
+    return SettingsResponse(has_key=has_key, source=source, masked_key=masked_key)
+
+@router.post("/api/settings/key")
+async def update_key(data: KeyUpdate, db: Session = Depends(get_db)):
+    config = db.query(Config).filter(Config.key == "openai_api_key").first()
+    if config:
+        config.value = data.openai_api_key
+    else:
+        config = Config(key="openai_api_key", value=data.openai_api_key)
+        db.add(config)
+    
+    db.commit()
+    return {"message": "API Key guardada correctamente"}
 
 @router.post("/chat")
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):

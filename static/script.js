@@ -25,16 +25,93 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatHistory = JSON.parse(localStorage.getItem('petCareChatHistory')) || [];
 
     // --- Initialization ---
-    function initialize() {
-        // Load persisted chat history into UI
+    async function initialize() {
+        // 1. Check AI Configuration
+        await checkAIConfig();
+
+        // 2. Load persisted chat history into UI
         if (chatHistory.length > 0) {
             chatMessages.innerHTML = '';
             chatHistory.forEach(msg => {
-                // Show user messages and final assistant text only
                 if (msg.role === 'user' || (msg.role === 'assistant' && msg.content && !msg.tool_calls)) {
                     appendMessage(msg.role, msg.content, false);
                 }
             });
+        }
+    }
+
+    async function checkAIConfig() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+
+            if (!settings.has_key) {
+                await promptForKey();
+            }
+            updateSettingsUI(settings);
+        } catch (error) {
+            console.error('Error checking config:', error);
+        }
+    }
+
+    async function promptForKey() {
+        const { value: apiKey } = await Swal.fire({
+            title: 'Configuración Requerida',
+            text: 'Para que el asistente funcione, por favor ingresa tu OpenAI API Key. Se guardará de forma segura en la base de datos.',
+            input: 'textarea',
+            inputPlaceholder: 'sk-...',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off'
+            },
+            showCancelButton: false,
+            confirmButtonText: 'Guardar Llave',
+            confirmButtonColor: '#4f46e5',
+            allowOutsideClick: false,
+            inputValidator: (value) => {
+                if (!value) return '¡Debes ingresar una llave válida!';
+                if (!value.startsWith('sk-')) return 'La llave debe empezar con "sk-"';
+            }
+        });
+
+        if (apiKey) {
+            await saveApiKey(apiKey);
+        }
+    }
+
+    async function saveApiKey(apiKey) {
+        try {
+            const response = await fetch('/api/settings/key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ openai_api_key: apiKey.trim() })
+            });
+            if (response.ok) {
+                Swal.fire({
+                    title: '¡Configurado!',
+                    text: 'La API Key se ha guardado correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
+                checkAIConfig(); // Refresh settings
+            }
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo guardar la llave.', 'error');
+        }
+    }
+
+    function updateSettingsUI(settings) {
+        const badge = document.getElementById('status-badge');
+        const display = document.getElementById('masked-key-display');
+
+        if (settings.has_key) {
+            badge.innerText = settings.source === 'env' ? 'Configurado (ENV)' : 'Configurado (DB)';
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold ${settings.source === 'env' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'}`;
+            display.innerText = settings.masked_key;
+        } else {
+            badge.innerText = 'No configurado';
+            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700';
+            display.innerText = '••••••••••••••••';
         }
     }
 
@@ -61,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (targetTab === 'pets') loadPets();
             if (targetTab === 'reminders') loadReminders();
+            if (targetTab === 'settings') checkAIConfig();
         });
     });
 
@@ -150,6 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    document.getElementById('update-key-btn').addEventListener('click', promptForKey);
 
     // Modal Handling
     function openEditModal(pet) {
