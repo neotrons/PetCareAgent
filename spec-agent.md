@@ -3,12 +3,12 @@
 Este documento detalla la arquitectura, herramientas y lógica del sistema tal como está implementado en esta versión funcional.
 
 ## 1. Stack Tecnológico Actual
-| Capa | Tecnología |
-| :--- | :--- |
-| **Backend** | FastAPI (Python 3.10+) |
-| **IA / Agente** | OpenAI GPT-4o (Function Calling) |
-| **Base de Datos** | SQLite con SQLAlchemy (ORM) |
-| **Frontend** | HTML5, Tailwind CSS, Vanilla JavaScript |
+| Capa                   | Tecnología                               |
+| :--------------------- | :--------------------------------------- |
+| **Backend**            | FastAPI (Python 3.10+)                   |
+| **IA / Agente**        | OpenAI GPT-4o (Function Calling)         |
+| **Base de Datos**      | SQLite con SQLAlchemy (ORM)              |
+| **Frontend**           | HTML5, Tailwind CSS, Vanilla JavaScript  |
 | **Persistencia local** | LocalStorage (para el historial de chat) |
 
 ## 2. Modelo de Datos
@@ -17,7 +17,7 @@ Este documento detalla la arquitectura, herramientas y lógica del sistema tal c
 - **Relación**: 1 Mascota -> N Eventos (Borrado en cascada habilitado).
 
 ## 3. Capacidades del Agente (Tools)
-El agente tiene acceso a las siguientes funciones registradas en `agent.py`:
+El agente tiene acceso a las siguientes funciones registradas en `src/agent.py`:
 - `register_pet`: Guarda una nueva mascota.
 - `register_event`: Asocia una vacuna, limpieza o cualquier actividad a una mascota por su nombre.
 

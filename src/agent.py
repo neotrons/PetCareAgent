@@ -4,7 +4,7 @@ from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
-from database import Pet, Event
+from .database import Pet, Event
 
 load_dotenv()
 

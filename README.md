@@ -43,22 +43,47 @@ Es un proyecto simple que integra la API de OpenAI e interactura con servicio de
 
 ## 🏃 Cómo ejecutar
 
-Para iniciar el servidor, ejecuta el siguiente comando:
+Existen varias formas de iniciar el servidor según tu preferencia:
 
+### 1. Comando Estándar (Recomendado)
+Usa el lanzador principal en la raíz:
 ```bash
 python main.py
 ```
 
-El servidor se iniciará en `http://localhost:8000`. Abre esa dirección en tu navegador para empezar.
+### 2. Modo Módulo Python
+```bash
+python -m src.main
+```
+
+### 3. Ejecución Directa con Uvicorn (Desarrollo)
+```bash
+uvicorn src.main:app --reload
+```
+
+El servidor se iniciará en `http://localhost:8000`.
 
 ## 📁 Estructura del Proyecto
 
-- `main.py`: Punto de entrada del servidor FastAPI y definición de la API.
-- `agent.py`: Lógica del agente de IA y definición de herramientas (function calling).
-- `database.py`: Configuración de SQLite y modelos de SQLAlchemy.
-- `static/`: Contiene el frontend (HTML, CSS modular y JavaScript).
-- `agent-especificaciones.md`: Documentación técnica detallada del MVP.
+El proyecto sigue una arquitectura modular para facilitar su escalabilidad:
+
+- **`main.py`**: Lanzador simplificado en la raíz.
+- **`src/`**: Núcleo de la aplicación.
+  - `main.py`: Configuración de FastAPI, base de datos y archivos estáticos.
+  - `api.py`: Definición de rutas (Endpoints) usando `APIRouter`.
+  - `schemas.py`: Modelos de validación de datos (Pydantic).
+  - `agent.py`: Lógica del agente de IA y herramientas.
+  - `database.py`: Modelos de base de datos y conexión (SQLAlchemy).
+- **`static/`**: Frontend (HTML, CSS profesional y JS de interacción).
+- **`agent-especificaciones.md`**: Guía técnica completa del proyecto.
+
+## 💡 Notas Útiles
+
+- **Base de Datos**: Se utiliza SQLite (`pets.db`). Las tablas se crean automáticamente al arrancar.
+- **Validación**: Todas las entradas de la API están validadas con Pydantic V2 para evitar errores de datos.
+- **Frontend**: Utiliza Tailwind CSS vía CDN para un diseño premium sin necesidad de herramientas de compilación.
+- **Contexto**: El agente utiliza una técnica de "resumen silencioso" de la base de datos para no saturar al usuario con información que ya conoce.
 
 ---
 > [!IMPORTANT]
-> El archivo de base de datos `pets.db` se crea automáticamente al ejecutar el proyecto por primera vez.
+> No olvides configurar tu `.env` con una API Key válida de OpenAI para que el asistente pueda responder.
